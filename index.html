@@ -494,6 +494,15 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
       gap: 16px;
+      min-height: 300px;
+    }
+
+    .cards-grid:has(.empty-state) {
+      place-items: center;
+    }
+
+    .cards-grid .empty-state {
+      grid-column: 1 / -1;
     }
 
     .card {
@@ -654,6 +663,17 @@
       background: var(--bg-section);
       border-radius: var(--border-radius);
       padding: 28px;
+      min-height: 200px;
+    }
+
+    .scenario-section:has(.empty-state) {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scenario-section .empty-state {
+      width: 100%;
     }
 
     .scenario-item {
