@@ -6,7 +6,11 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git checkout:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(ls -la *.json)",
+      "Bash(ls *.json *.js *.html *.md)"
     ]
   }
 }
