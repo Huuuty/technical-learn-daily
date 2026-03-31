@@ -1400,6 +1400,14 @@
 
       currentModel = savedModel;
       document.getElementById('modelSelect').value = currentModel;
+
+      // 页面加载时回填 API Key 到配置输入框
+      const apiKeyInput = document.getElementById('apiKeyInput');
+      if (apiKey) {
+        apiKeyInput.value = apiKey;
+        apiKeyInput.type = 'password';
+      }
+
       updateApiStatus(!!apiKey);
 
       // 读取被移除的预置领域
