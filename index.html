@@ -1448,8 +1448,8 @@
       if (savedCards) {
         try {
           const parsed = JSON.parse(savedCards);
-          // 检查是否为新格式（有scene字段），否则清除旧数据
-          if (parsed.length > 0 && !parsed[0].scene) {
+          // 检查是否为新格式（有scene和reason字段），否则清除旧数据
+          if (parsed.length > 0 && (!parsed[0].scene || !parsed[0].reason)) {
             localStorage.removeItem('techdaily_cards');
           } else {
             currentCards = parsed;
@@ -1891,6 +1891,7 @@ ${allExisting || '无'}
   - scene: 一个具体的小场景（如：商品主图尺寸不统一导致搜索列表展示错乱、用户上传的身份证照片模糊需要自动增强、直播间弹幕太多需要过滤垃圾信息）
   - problem: 该场景面临的细粒度问题（如：同一商品多个SKU的白色款在白底图上几乎看不见、用户拍的证件照光照不均导致OCR识别率低）
   - solution: 针对这个具体问题的解决方案
+  - reason: 为什么可以这么解决（技术原理或思路）
   - effect: 解决后的效果
   - keywords: 3-5个关键词
   - domain: ${domain.id}
@@ -1904,6 +1905,7 @@ ${allExisting || '无'}
   "scene": "...",
   "problem": "...",
   "solution": "...",
+  "reason": "...",
   "effect": "...",
   "keywords": ["...", "...", "..."]
 }`;
@@ -2314,6 +2316,10 @@ ${cardDetails}
             <p style="line-height: 1.8;">${card.solution}</p>
           </div>
           <div class="modal-section">
+            <h4 style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">为什么可以解决</h4>
+            <p style="line-height: 1.8;">${card.reason}</p>
+          </div>
+          <div class="modal-section">
             <h4 style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">实施效果</h4>
             <p style="line-height: 1.8;">${card.effect}</p>
           </div>
@@ -2380,6 +2386,8 @@ ${cardDetails}
 面临问题：${card.problem}
 
 解决方案：${card.solution}
+
+为什么可以解决：${card.reason}
 
 实施效果：${card.effect}
 
