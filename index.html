@@ -1447,8 +1447,16 @@
       const savedCards = localStorage.getItem('techdaily_cards');
       if (savedCards) {
         try {
-          currentCards = JSON.parse(savedCards);
-        } catch (e) {}
+          const parsed = JSON.parse(savedCards);
+          // 检查是否为新格式（有scene字段），否则清除旧数据
+          if (parsed.length > 0 && !parsed[0].scene) {
+            localStorage.removeItem('techdaily_cards');
+          } else {
+            currentCards = parsed;
+          }
+        } catch (e) {
+          localStorage.removeItem('techdaily_cards');
+        }
       }
 
       const savedScenario = localStorage.getItem('techdaily_scenario');
@@ -1860,31 +1868,30 @@
 
       for (const { domain, count } of domainCardCounts) {
         for (let j = 0; j < count; j++) {
-          // 获取所有已生成的标题和关键词，用于避免重复
+          // 获取所有已生成的场景，用于避免重复
           const allExisting = newCards
-            .map(c => `领域：${c.domainName}，标题：${c.title}，关键词：${(c.keywords || []).join('、')}`)
+            .map(c => `领域：${c.domainName}，场景：${c.scene}，关键词：${(c.keywords || []).join('、')}`)
             .join('\n');
 
-          const prompt = `你是售前技术知识专家。请为售前工程师生成1个技术知识卡片。
+          const prompt = `你是售前技术知识专家。请为售前工程师生成1个具体的业务场景案例。
 
 【重要提醒】
-- 同一领域（${domain.name}）内绝对不能生成重复的知识点
-- 不同领域之间也要避免概念重复
-- 即使表述方式不同，如果核心概念相同也不能生成
-- 每个知识点必须是完全不同的技术概念
-- **最新知识点不要和之前提供的有任何重复，不允许出现知识点没变只是改了标题的情况**
+- 同一领域（${domain.name}）内绝对不能生成重复的场景
+- 不同领域之间也要避免场景重复
+- 每个场景必须是完全不同的业务情境
+- **最新场景不要和之前提供的有任何重复，不允许出现场景没变只是改了标题的情况**
 
-已生成的所有知识点（必须全部跳过，不能重复）：
+已生成的所有场景（必须全部跳过，不能重复）：
 ${allExisting || '无'}
 
-本次需要生成的知识点：
+本次需要生成的场景：
 - 领域：${domain.name}
-- 需要包含：
-  - title: 吸引人的标题，用一句话概括（必须与已生成的完全不同）
-  - analogy: 一个生动的生活比喻，让非技术人员能理解
-  - core: 核心技术点的详细解释
-  - connection: 这个知识点与其他领域知识点的关联和串联
-  - keywords: 3-5个关键词（必须与已生成的不重复）
+- 必须包含：
+  - scene: 一个具体的业务场景描述（如：某电商平台需要为商品生成高质量配图）
+  - problem: 该场景面临的具体问题或痛点（要具体，如：每天需要为上万商品生成配图，人工设计成本高、耗时长）
+  - solution: 对应的技术解决方案（要具体说明技术如何解决这个问题的）
+  - effect: 实施后的效果或收益（量化指标更好，如：成本降低70%，生成效率提升10倍）
+  - keywords: 3-5个关键词
   - domain: ${domain.id}
   - domainName: ${domain.name}
 
@@ -1893,10 +1900,10 @@ ${allExisting || '无'}
   "id": ${cardId},
   "domain": "${domain.id}",
   "domainName": "${domain.name}",
-  "title": "...",
-  "analogy": "...",
-  "core": "...",
-  "connection": "...",
+  "scene": "...",
+  "problem": "...",
+  "solution": "...",
+  "effect": "...",
   "keywords": ["...", "...", "..."]
 }`;
 
@@ -1958,8 +1965,8 @@ ${allExisting || '无'}
         <div class="card-header">
           <span class="domain-badge">${cardData.domainName || cardData.domain}</span>
         </div>
-        <h3>${cardData.title}</h3>
-        <p class="card-analogy">${cardData.analogy}</p>
+        <h3>${cardData.scene}</h3>
+        <p class="card-analogy">问题：${cardData.problem}</p>
         <div class="card-keywords">
           ${(cardData.keywords || []).map(k => `<span class="keyword">${k}</span>`).join('')}
         </div>
@@ -2068,8 +2075,8 @@ ${cardDetails}
           <div class="card-header">
             <span class="domain-badge">${card.domainName || card.domain}</span>
           </div>
-          <h3>${card.title}</h3>
-          <p class="card-analogy">${card.analogy}</p>
+          <h3>${card.scene}</h3>
+          <p class="card-analogy">问题：${card.problem}</p>
           <div class="card-keywords">
             ${(card.keywords || []).map(k => `<span class="keyword">${k}</span>`).join('')}
           </div>
@@ -2285,7 +2292,7 @@ ${cardDetails}
       content.innerHTML = `
         <div class="modal-header" style="position: relative;">
           <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: ${domain?.color || '#1a1a1a'};"></div>
-          <h3 style="padding-right: 40px;">${card.title}</h3>
+          <h3 style="padding-right: 40px;">${card.scene}</h3>
           <button class="modal-close" onclick="closeDetailModal()" style="position: absolute; top: 20px; right: 20px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 6L6 18M6 6l12 12"/>
@@ -2294,16 +2301,20 @@ ${cardDetails}
         </div>
         <div class="modal-body">
           <div class="modal-section">
-            <h4 style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">通俗理解</h4>
-            <p style="line-height: 1.8;">${card.analogy}</p>
+            <h4 style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">业务场景</h4>
+            <p style="line-height: 1.8;">${card.scene}</p>
           </div>
           <div class="modal-section">
-            <h4 style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">核心技术点</h4>
-            <p style="line-height: 1.8;">${card.core}</p>
+            <h4 style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">面临问题</h4>
+            <p style="line-height: 1.8;">${card.problem}</p>
           </div>
           <div class="modal-section">
-            <h4 style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">与其他领域的联系</h4>
-            <p style="line-height: 1.8;">${card.connection}</p>
+            <h4 style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">解决方案</h4>
+            <p style="line-height: 1.8;">${card.solution}</p>
+          </div>
+          <div class="modal-section">
+            <h4 style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">实施效果</h4>
+            <p style="line-height: 1.8;">${card.effect}</p>
           </div>
           <div class="modal-section">
             <h4 style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">关键词</h4>
@@ -2361,22 +2372,22 @@ ${cardDetails}
       btn.disabled = true;
       btn.innerHTML = '<span class="ai-loading">AI思考中...</span>';
 
-      const prompt = `你是一位售前技术专家。请用更详细、更深入的方式解释以下技术概念：
+      const prompt = `你是一位售前技术专家。请用更详细、更深入的方式分析以下业务场景：
 
-技术概念：${card.title}
+业务场景：${card.scene}
 
-通俗比喻：${card.analogy}
+面临问题：${card.problem}
 
-核心技术点：${card.core}
+解决方案：${card.solution}
 
-知识点关联：${card.connection}
+实施效果：${card.effect}
 
 请从以下几个方面展开：
-1. 这个技术在实际工作中解决了什么问题？
-2. 给一个具体的应用例子
+1. 这个解决方案的技术原理是什么？
+2. 在实际项目中，实施这个方案需要注意哪些关键点？
 3. 在向客户介绍时，应该重点强调哪些价值点？
 4. 客户可能会有的疑问和对应的回答。
-5. 与今天其他知识点可能的结合应用场景
+5. 与其他业务场景结合的可能性
 
 请用简洁易懂的语言，避免过多专业术语。`;
 
